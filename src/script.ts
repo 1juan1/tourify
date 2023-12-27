@@ -1,6 +1,4 @@
-//import { URLSearchParams } from "next/dist/compiled/@edge-runtime/primitives/url";
-
-const clientId = "ecc7a12366d74791bc02378af6adc309"; // Replace with your client id
+const clientId = ""; // Replace with your client id
 const params = new URLSearchParams(window.location.search)
 const code = params.get("code");
 
@@ -10,6 +8,10 @@ if (!code) {
     const accessToken = await getAccessToken(clientId, code);
     const profile = await fetchProfile(accessToken);
     populateUI(profile);
+    const top_artists = await fetchTopTen(accessToken);
+    populateArtists(top_artists);
+
+
 }
 
 export async function redirectToAuthCodeFlow(clientId: string) {
@@ -22,7 +24,7 @@ export async function redirectToAuthCodeFlow(clientId: string) {
     params.append("client_id", clientId);
     params.append("response_type", "code");
     params.append("redirect_uri", "http://localhost:5173/callback");
-    params.append("scope", "user-read-private user-read-email");
+    params.append("scope", "user-read-private user-read-email user-top-read");
     params.append("code_challenge_method", "S256");
     params.append("code_challenge", challenge);
 
@@ -78,6 +80,15 @@ async function fetchProfile(token: string): Promise<any> {
 }
 
 
+async function fetchTopTen(token: string): Promise<any> {
+    const result = await fetch("https://api.spotify.com/v1/me/top/artists?time_range=medium_term&limit=10", {
+        method: "GET", headers: { Authorization: `Bearer ${token}` }
+    });
+
+    return await result.json();
+}
+
+
 function populateUI(profile: any) {
     document.getElementById("displayName")!.innerText = profile.display_name;
     if (profile.images[0]) {
@@ -93,5 +104,10 @@ function populateUI(profile: any) {
     document.getElementById("url")!.setAttribute("href", profile.href);
     document.getElementById("imgUrl")!.innerText = profile.images[0]?.url ?? '(no profile image)';
 }
+
+function populateArtists(top_artists: any) {
+    document.getElementById("topartist")!.innerText = top_artists.items[0].name;
+}
+
 
 
